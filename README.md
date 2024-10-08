@@ -9,12 +9,12 @@ This project was developed at Unified Mentor by **Rajat Singh**. The goal is to 
 - **dashboar.py**: Main application file containing the layout and logic for the Dash app.
 - **data_ingestion.py**: Contains functions for ingesting data from MongoDB.
 - **data_dump.py**: Script used to dump cleaned datasets into MongoDB.
-- **google_rearch.ipynb**: Jupyter notebook where Exploratory Data Analysis (EDA) was performed using Sweetviz.
+- **google_rearch.ipynb**: Jupyter notebook where Exploratory Data Analysis (EDA) was performed using Sweetviz. 
 - **datasets/**: Directory containing all datasets used in the project.
 - **assets/**: Contains CSS styles and images for the dashboard.
 - **Project demo/**: Folder Contains Project demo vedio. 
 - **Screeshot/**: Folder Contains Screenshots of  app.
-- **requirements.txt/**: Contains all modules require for this Project .
+- **requirements.txt/**: Contains all modules require for this Project.
 
 ## Features
 - **Data Ingestion**: Connects to MongoDB and retrieves the dataset.
