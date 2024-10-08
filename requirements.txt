@@ -7,5 +7,5 @@ streamlit
 scikit-learn
 sweetviz
 ydata-profiling
-dotenv
 pymongo
+python-dotenv
