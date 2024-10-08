@@ -9,3 +9,4 @@ sweetviz
 ydata-profiling
 pymongo
 python-dotenv
+dash 
