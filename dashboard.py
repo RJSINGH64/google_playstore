@@ -272,4 +272,4 @@ html.Footer(style={'marginTop': '20px', 'textAlign': 'center'}, children=[
 
 # Run the Dash app
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)

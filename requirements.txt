@@ -3,10 +3,7 @@ numpy
 matplotlib
 seaborn
 plotly 
-streamlit
-scikit-learn
 sweetviz
-ydata-profiling
 pymongo
 python-dotenv
 dash 
