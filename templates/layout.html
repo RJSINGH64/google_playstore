@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Google Play Store Dashboard</title>
+    <link rel="stylesheet" href="/assets/style.css"> <!-- Link to CSS -->
+</head>
+
+<body>
+    <div id="app" style="display: flex;"> <!-- Use flexbox for layout -->
+        <div class="left-column">
+            {%app_entry%} <!-- This is where Dash will render the app -->
+        </div>
+        <div class="right-column">
+            <!-- Right column can be used for additional information or visuals -->
+            <h3>Additional Information</h3>
+            <p>Use this section for additional content, explanations, or visuals.</p>
+        </div>
+    </div>
+    {%config%} <!-- Required for Dash -->
+    {%scripts%} <!-- Required for Dash -->
+</body>
+
+</html>

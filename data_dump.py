@@ -3,7 +3,7 @@ import pandas as pd
 import pymongo
 import os
 
-file_path = os.path.join(os.getcwd() , "dataset\googleplaystore.csv")
+file_path = os.path.join(os.getcwd() , "dataset\google_data_merged.csv") #after performing EDA inside research.py, dumping cleaned merge dataset inside MongoDb 
 data_base= "Google"
 collection='apps'
 
