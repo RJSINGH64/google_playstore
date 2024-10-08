@@ -1,6 +1,6 @@
  # Google Play Store Dashboard
 
-![Dashboard Screenshot](assets/share_google_play_logo.png) <!-- Replace with your image path -->
+![Dashboard Screenshot](assets/share_google_play_logo.png) <!-- Google Playstore Image -->
 
 ## Project Overview
 This project was developed at Unified Mentor by **Rajat Singh**. The goal is to create an interactive dashboard using Dash to explore Google Play Store data.
@@ -12,6 +12,9 @@ This project was developed at Unified Mentor by **Rajat Singh**. The goal is to 
 - **google_rearch.ipynb**: Jupyter notebook where Exploratory Data Analysis (EDA) was performed using Sweetviz.
 - **datasets/**: Directory containing all datasets used in the project.
 - **assets/**: Contains CSS styles and images for the dashboard.
+- **Project demo/**: Folder Contains Project demo vedio. 
+- **Screeshot/**: Folder Contains Screenshots of  app.
+- **requirements.txt/**: Contains all modules require for this Project .
 
 ## Features
 - **Data Ingestion**: Connects to MongoDB and retrieves the dataset.

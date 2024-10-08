@@ -3,14 +3,16 @@ from dash import dcc, html, Input, Output
 import pandas as pd
 import plotly.express as px
 from dash import dash_table
-from data_ingestion  import DataIngestion# make sure  to dump cleaned dataset inside MongoDb first , using data_dump.py
+from data_ingestion import DataIngestion  # make sure to dump cleaned dataset inside MongoDb first
+
 import sys
+
 # Load your dataset
-try :
-    object=DataIngestion()
-    df_copy = object.initiate_data_ingestion() #importing dataset from MongoDb Atlas
+try:
+    obj = DataIngestion()  # Create an instance of DataIngestion
+    df_copy = obj.initiate_data_ingestion()  # Import dataset from MongoDB Atlas
 except Exception as e:
-    print(e , sys)    
+    print(e, sys)
 
 # Clean the data: Convert the 'Price' column to numeric, remove '$' sign
 df_copy['Price($)'] = df_copy['Price($)'].replace({'\$': '', '₹': ''}, regex=True).astype(float)
@@ -38,7 +40,7 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alig
             html.H3("Options", style={'textAlign': 'center'}),
             html.Button('Explore Playstore Dataset', id='explore-btn', style={'width': '100%', 'marginBottom': '10px'}),
             html.Button('Download Top Apps', id='download-btn', style={'width': '100%', 'marginBottom': '10px'}),
-            
+
             # Checklist for general plot selection
             dcc.Checklist(
                 id='column-checklist',
@@ -46,7 +48,7 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alig
                 value=[],  # No columns selected by default
                 labelStyle={'display': 'block'}
             ),
-            
+
             html.Br(),
 
             # Dropdown for heatmap selection
@@ -56,7 +58,19 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alig
                 multi=True,
                 placeholder="Select numeric columns for heatmap",
             ),
-            html.Br()
+            html.Br(),
+
+            # Additional dropdown for comparison between Rating, App, Category, Month, and Year
+            dcc.Dropdown(
+                id='relation-dropdown',
+                options=[
+                    {'label': 'App vs Rating', 'value': 'app_rating'},
+                    {'label': 'Rating vs Category', 'value': 'rating_category'},
+                    {'label': 'Rating vs Month', 'value': 'rating_month'},
+                    {'label': 'Rating vs Year', 'value': 'rating_year'}
+                ],
+                placeholder="Select relation plot"
+            )
         ]),
 
         # Main output area
@@ -65,8 +79,12 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alig
             html.Div(id='top-apps'),  # Placeholder for displaying top apps
             html.Div(id='heatmap-plot'),  # Placeholder for heatmap
             html.Div(id='summary-text'),  # Placeholder for summary text
-            html.Div(id='relation-plot')  # Placeholder for relation plot
+            html.Div(id='comparison-plot')  # Placeholder for comparison plot
         ])
+    ]),
+    # Footer
+    html.Footer(style={'marginTop': '20px', 'textAlign': 'center', 'fontSize': '16px'}, children=[
+        "Created by Rajat Singh"
     ])
 ])
 
@@ -78,7 +96,7 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alig
 def explore_dataset(n_clicks):
     if n_clicks is None:
         return html.Div()  # Return empty if button hasn't been clicked
-    
+
     return html.Div([
         html.H3("Explore Dataset:", style={'textAlign': 'center'}),
         html.Div(id='data-output')  # This div will hold the output of selected columns
@@ -92,9 +110,9 @@ def explore_dataset(n_clicks):
 def display_data(selected_columns):
     if not selected_columns:
         return html.Div("No columns selected", style={'textAlign': 'center'})
-    
+
     filtered_df = df_copy[selected_columns]
-    
+
     visuals = []
     for col in selected_columns:
         visuals.append(
@@ -119,13 +137,13 @@ def display_data(selected_columns):
 def show_top_apps(n_clicks):
     if n_clicks is None:
         return html.Div()  # Return empty if button hasn't been clicked
-    
+
     # Get top 10 apps by installs
     top_apps = df_copy[['App', 'Installs']].sort_values(by='Installs', ascending=False).head(10)
 
     app_names = [
         html.Div(
-            f"{row['App']} (Installs: {row['Installs']})", 
+            f"{row['App']} (Installs: {row['Installs']})",
             style={'textAlign': 'center'}
         )
         for index, row in top_apps.iterrows()
@@ -170,7 +188,7 @@ def display_heatmap(selected_columns):
 def update_summary(selected_columns):
     if not selected_columns:
         return "Select options to see the summary."
-    
+
     # Filter to keep only numerical columns
     numerical_columns = df_copy.select_dtypes(include=['float64', 'int64']).columns.intersection(selected_columns)
 
@@ -191,30 +209,67 @@ def update_summary(selected_columns):
 
     return summary_table
 
-# Callback for displaying the relationship between App, Month, and Year
+# Callback for displaying additional comparison between Rating, App, Category, Month, and Year
 @app.callback(
-    Output('relation-plot', 'children'),
-    [Input('column-checklist', 'value')]
+    Output('comparison-plot', 'children'),
+    [Input('relation-dropdown', 'value')]
 )
-def display_relation(selected_columns):
-    if not selected_columns or 'Month' not in selected_columns or 'Year' not in selected_columns:
-        return html.Div("Select 'Month' and 'Year' to see the relationship with App.", style={'textAlign': 'center'})
+def display_relation(selected_option):
+    if not selected_option:
+        return html.Div("Select a relation option.", style={'textAlign': 'center'})
 
-    # Create a scatter plot for App, Month, and Year
-    fig = px.scatter(
-        df_copy,
-        x='Month',
-        y='Year',
-        color='App',
-        title='Relationship between App, Month, and Year',
-        color_discrete_sequence=px.colors.qualitative.Plotly  # Best color palette
-    )
+    # App vs Rating
+    if selected_option == 'app_rating':
+        fig = px.scatter(
+            df_copy,
+            x='App',
+            y='Rating',
+            title="App vs Rating",
+            color='Category',  # Optionally color by Category for better distinction
+            template='plotly_white'
+        )
+        return dcc.Graph(figure=fig)
 
-    return dcc.Graph(figure=fig)
+    # Rating vs Category
+    elif selected_option == 'rating_category':
+        fig = px.box(
+            df_copy,
+            x='Category',
+            y='Rating',
+            title="Rating Distribution by Category",
+            template='plotly_white',
+            color_discrete_sequence=px.colors.qualitative.Plotly
+        )
+        return dcc.Graph(figure=fig)
+
+    # Rating vs Month
+    elif selected_option == 'rating_month':
+        fig = px.box(
+            df_copy,
+            x='Month',  # Assuming there is a 'Month' column in your DataFrame
+            y='Rating',
+            title="Rating Distribution by Month",
+            template='plotly_white'
+        )
+        return dcc.Graph(figure=fig)
+
+    # Rating vs Year
+    elif selected_option == 'rating_year':
+        fig = px.box(
+            df_copy,
+            x='Year',  # Assuming there is a 'Year' column in your DataFrame
+            y='Rating',
+            title="Rating Distribution by Year",
+            template='plotly_white'
+        )
+        return dcc.Graph(figure=fig)
+# Footer Section
+html.Footer(style={'marginTop': '20px', 'textAlign': 'center'}, children=[
+    html.P("Created by: Rajat Singh")
+])
 
 
 
-
-# Run the app
+# Run the Dash app
 if __name__ == '__main__':
     app.run_server(debug=True)
