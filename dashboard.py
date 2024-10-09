@@ -268,8 +268,7 @@ html.Footer(style={'marginTop': '20px', 'textAlign': 'center'}, children=[
     html.P("Created by: Rajat Singh")
 ])
 
+#running app
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=8000)
 
-
-# Run the Dash app
-if __name__ == '__main__':
-    app.run_server(debug=False)
