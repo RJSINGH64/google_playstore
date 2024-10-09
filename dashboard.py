@@ -234,7 +234,7 @@ def display_relation(selected_option):
         fig = px.box(
             df_copy,
             x='Category',
-            y='Rating'
+            y='Rating' , 
             title="Rating Distribution by Category",
             template='plotly_white',
             color_discrete_sequence=px.colors.qualitative.Plotly
