@@ -7,3 +7,4 @@ sweetviz
 pymongo
 python-dotenv
 dash 
+gunicorn
