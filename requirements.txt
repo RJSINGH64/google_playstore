@@ -1,3 +1,4 @@
+gunicorn
 pandas
 numpy
 matplotlib
@@ -7,4 +8,4 @@ sweetviz
 pymongo
 python-dotenv
 dash 
-gunicorn
+

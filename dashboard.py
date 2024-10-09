@@ -4,7 +4,6 @@ import pandas as pd
 import plotly.express as px
 from dash import dash_table
 from data_ingestion import DataIngestion  # make sure to dump cleaned dataset inside MongoDb first
-
 import sys
 
 # Load your dataset
@@ -235,7 +234,7 @@ def display_relation(selected_option):
         fig = px.box(
             df_copy,
             x='Category',
-            y='Rating',
+            y='Rating'
             title="Rating Distribution by Category",
             template='plotly_white',
             color_discrete_sequence=px.colors.qualitative.Plotly
@@ -270,5 +269,4 @@ html.Footer(style={'marginTop': '20px', 'textAlign': 'center'}, children=[
 
 #running app
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8000)
-
+    app.run_server(debug=False, port=8050)
