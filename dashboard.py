@@ -1,46 +1,41 @@
-import dash
-from dash import dcc, html, Input, Output
+from flask import Flask
+from dash import Dash, dcc, html, Input, Output
 import pandas as pd
 import plotly.express as px
 from dash import dash_table
-from data_ingestion import DataIngestion  # make sure to dump cleaned dataset inside MongoDb first
-import sys
+import os
 
-# Load your dataset
-try:
-    obj = DataIngestion()  # Create an instance of DataIngestion
-    df_copy = obj.initiate_data_ingestion()  # Import dataset from MongoDB Atlas
-except Exception as e:
-    print(e, sys)
+# Flask server instance
+server = Flask(__name__)
 
-# Clean the data: Convert the 'Price' column to numeric, remove '$' sign
+# Initialize Dash app with Flask server
+app = Dash(__name__, server=server)
+
+# Load the dataset
+file_path = os.path.join(os.getcwd(), "dataset/google_data_merged.csv")
+df_copy = pd.read_csv(file_path)
+
+# Clean the data
 df_copy['Price($)'] = df_copy['Price($)'].replace({'\$': '', '₹': ''}, regex=True).astype(float)
-
-# Remove unnamed columns
 df_copy = df_copy.loc[:, ~df_copy.columns.str.contains('^Unnamed')]
 
-# Initialize the Dash app
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
-
-# App layout
-app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center'}, children=[
-    # Center the title
+# App layout with Google-style theme (whitish green)
+app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'backgroundColor': '#F0F4F3'}, children=[
     html.Div(
         children=[
             html.H1('Google Play Store Dashboard', style={'color': '#34A853', 'textAlign': 'center'}),
-            html.Img(src='assets\share_google_play_logo.png',
-                     style={'borderRadius': '15px', 'display': 'block', 'margin': '0 auto'})
+            html.Img(src=r'assets\share_google_play_logo.png', style={'borderRadius': '15px', 'display': 'block', 'margin': '0 auto'})
         ]
     ),
 
-    # Layout with two columns: options on the left and outputs on the right
+    # Two-column layout: Options on the left, plots on the right
     html.Div(style={'display': 'flex', 'width': '100%'}, children=[
         html.Div(style={'flex': '1', 'padding': '20px'}, children=[
             html.H3("Options", style={'textAlign': 'center'}),
             html.Button('Explore Playstore Dataset', id='explore-btn', style={'width': '100%', 'marginBottom': '10px'}),
             html.Button('Download Top Apps', id='download-btn', style={'width': '100%', 'marginBottom': '10px'}),
 
-            # Checklist for general plot selection
+            # Checklist for column selection
             dcc.Checklist(
                 id='column-checklist',
                 options=[{'label': col, 'value': col} for col in df_copy.columns],
@@ -55,11 +50,11 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alig
                 id='heatmap-dropdown',
                 options=[{'label': col, 'value': col} for col in df_copy.select_dtypes(include=['float64', 'int64']).columns],
                 multi=True,
-                placeholder="Select numeric columns for heatmap",
+                placeholder="Select numeric columns for heatmap"
             ),
             html.Br(),
 
-            # Additional dropdown for comparison between Rating, App, Category, Month, and Year
+            # Additional dropdown for comparisons
             dcc.Dropdown(
                 id='relation-dropdown',
                 options=[
@@ -74,15 +69,16 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alig
 
         # Main output area
         html.Div(style={'flex': '3', 'padding': '20px'}, children=[
-            html.Div(id='dataset-explorer'),  # Placeholder for dataset exploration
-            html.Div(id='top-apps'),  # Placeholder for displaying top apps
-            html.Div(id='heatmap-plot'),  # Placeholder for heatmap
-            html.Div(id='summary-text'),  # Placeholder for summary text
-            html.Div(id='comparison-plot')  # Placeholder for comparison plot
+            html.Div(id='dataset-explorer'),
+            html.Div(id='top-apps'),
+            html.Div(id='heatmap-plot'),
+            html.Div(id='summary-text'),
+            html.Div(id='comparison-plot')
         ])
     ]),
+    
     # Footer
-    html.Footer(style={'marginTop': '20px', 'textAlign': 'center', 'fontSize': '16px'}, children=[
+    html.Footer(style={'marginTop': '20px', 'textAlign': 'center'}, children=[
         "Created by Rajat Singh"
     ])
 ])
@@ -94,14 +90,13 @@ app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alig
 )
 def explore_dataset(n_clicks):
     if n_clicks is None:
-        return html.Div()  # Return empty if button hasn't been clicked
-
+        return html.Div()
     return html.Div([
         html.H3("Explore Dataset:", style={'textAlign': 'center'}),
-        html.Div(id='data-output')  # This div will hold the output of selected columns
+        html.Div(id='data-output')
     ])
 
-# Callback for displaying data based on selected columns from checkboxes
+# Callback for displaying data based on selected columns
 @app.callback(
     Output('data-output', 'children'),
     [Input('column-checklist', 'value')]
@@ -121,39 +116,56 @@ def display_data(selected_columns):
                     x=col,
                     title=f'Distribution of {col}',
                     template='plotly_white',
-                    color_discrete_sequence=px.colors.qualitative.Plotly  # Best color palette
+                    color_discrete_sequence=px.colors.qualitative.Plotly
                 )
             )
         )
-
     return html.Div(visuals)
 
-# Callback for showing top-rated apps after clicking 'Download App'
+# Callback for showing top-rated apps
 @app.callback(
     Output('top-apps', 'children'),
     [Input('download-btn', 'n_clicks')]
 )
 def show_top_apps(n_clicks):
     if n_clicks is None:
-        return html.Div()  # Return empty if button hasn't been clicked
+        return html.Div()
 
-    # Get top 10 apps by installs
-    top_apps = df_copy[['App', 'Installs']].sort_values(by='Installs', ascending=False).head(10)
+    # Group by 'App' and 'Installs', sum the installs, then sort by 'Installs'
+    top_apps = df_copy.groupby('App')['Installs'].sum().reset_index().sort_values(by='Installs', ascending=False).head(10)
 
-    app_names = [
-        html.Div(
-            f"{row['App']} (Installs: {row['Installs']})",
-            style={'textAlign': 'center'}
-        )
-        for index, row in top_apps.iterrows()
-    ]
+    # Display top apps in a DataTable
+    top_apps_table = dash_table.DataTable(
+        id='top-apps-table',
+        columns=[
+            {"name": "App", "id": "App"},
+            {"name": "Installs", "id": "Installs"}
+        ],
+        data=top_apps.to_dict('records'),  # Convert DataFrame to dict records
+        style_header={
+            'backgroundColor': '#34A853',
+            'fontWeight': 'bold',
+            'color': 'white',
+            'textAlign': 'center'
+        },
+        style_cell={
+            'textAlign': 'center',
+            'padding': '10px',
+            'whiteSpace': 'normal',
+            'height': 'auto'
+        },
+        style_table={
+            'width': '100%',
+            'margin': 'auto'
+        }
+    )
 
-    return html.Div([
-        html.H3("Top 10 Apps by Installs:", style={'textAlign': 'center'}),
-        *app_names  # Unpack app names into the Div
+    return html.Div(children=[
+        html.H3("Top 10 Apps by Installs", style={'textAlign': 'center'}),
+        top_apps_table
     ])
 
-# Callback to display the heatmap of correlations
+# Callback for heatmap
 @app.callback(
     Output('heatmap-plot', 'children'),
     [Input('heatmap-dropdown', 'value')]
@@ -162,53 +174,15 @@ def display_heatmap(selected_columns):
     if not selected_columns:
         return html.Div("Select numeric columns for heatmap.", style={'textAlign': 'center'})
 
-    # Select only numeric columns for correlation
     filtered_df = df_copy[selected_columns]
-
-    # Calculate the correlation matrix
     correlation_matrix = filtered_df.corr()
 
-    # Create a heatmap using Plotly with annotations
-    fig = px.imshow(
-        correlation_matrix,
-        title="<b>Correlation Heatmap</b>",
-        labels=dict(x='Columns', y='Columns'),
-        color_continuous_scale='Viridis',
-        text_auto=True  # Enable annotations
-    )
+    fig = px.imshow(correlation_matrix, title="Correlation Heatmap", labels=dict(x='Columns', y='Columns'),
+                    color_continuous_scale='Viridis', text_auto=True)
 
     return dcc.Graph(figure=fig)
 
-# Callback for displaying summary text based on selected options
-@app.callback(
-    Output('summary-text', 'children'),
-    [Input('column-checklist', 'value')]
-)
-def update_summary(selected_columns):
-    if not selected_columns:
-        return "Select options to see the summary."
-
-    # Filter to keep only numerical columns
-    numerical_columns = df_copy.select_dtypes(include=['float64', 'int64']).columns.intersection(selected_columns)
-
-    if numerical_columns.empty:
-        return "No numerical columns selected for summary."
-
-    # Generate summary statistics
-    summary_df = df_copy[numerical_columns].describe().reset_index()
-
-    # Create a DataTable to display the summary
-    summary_table = dash_table.DataTable(
-        data=summary_df.to_dict('records'),
-        columns=[{"name": i, "id": i} for i in summary_df.columns],
-        style_table={'overflowX': 'auto'},
-        style_cell={'textAlign': 'left'},
-        page_size=10  # Number of rows per page
-    )
-
-    return summary_table
-
-# Callback for displaying additional comparison between Rating, App, Category, Month, and Year
+# Callback for displaying relations
 @app.callback(
     Output('comparison-plot', 'children'),
     [Input('relation-dropdown', 'value')]
@@ -217,56 +191,17 @@ def display_relation(selected_option):
     if not selected_option:
         return html.Div("Select a relation option.", style={'textAlign': 'center'})
 
-    # App vs Rating
     if selected_option == 'app_rating':
-        fig = px.scatter(
-            df_copy,
-            x='App',
-            y='Rating',
-            title="App vs Rating",
-            color='Category',  # Optionally color by Category for better distinction
-            template='plotly_white'
-        )
-        return dcc.Graph(figure=fig)
-
-    # Rating vs Category
+        fig = px.scatter(df_copy, x='App', y='Rating', title="App vs Rating", color='Category', template='plotly_white')
     elif selected_option == 'rating_category':
-        fig = px.box(
-            df_copy,
-            x='Category',
-            y='Rating' , 
-            title="Rating Distribution by Category",
-            template='plotly_white',
-            color_discrete_sequence=px.colors.qualitative.Plotly
-        )
-        return dcc.Graph(figure=fig)
-
-    # Rating vs Month
+        fig = px.box(df_copy, x='Category', y='Rating', title="Rating vs Category", template='plotly_white')
     elif selected_option == 'rating_month':
-        fig = px.box(
-            df_copy,
-            x='Month',  # Assuming there is a 'Month' column in your DataFrame
-            y='Rating',
-            title="Rating Distribution by Month",
-            template='plotly_white'
-        )
-        return dcc.Graph(figure=fig)
+        fig = px.box(df_copy, x='Month', y='Rating', title="Rating vs Month", template='plotly_white')
+    else:  # 'rating_year'
+        fig = px.box(df_copy, x='Year', y='Rating', title="Rating vs Year", template='plotly_white')
 
-    # Rating vs Year
-    elif selected_option == 'rating_year':
-        fig = px.box(
-            df_copy,
-            x='Year',  # Assuming there is a 'Year' column in your DataFrame
-            y='Rating',
-            title="Rating Distribution by Year",
-            template='plotly_white'
-        )
-        return dcc.Graph(figure=fig)
-# Footer Section
-html.Footer(style={'marginTop': '20px', 'textAlign': 'center'}, children=[
-    html.P("Created by: Rajat Singh")
-])
+    return dcc.Graph(figure=fig)
 
-#running app
-if __name__ == "__main__":
+# Run Flask/Dash server with debug mode disabled for production
+if __name__ == '__main__':
     app.run_server(debug=False, port=8050)
