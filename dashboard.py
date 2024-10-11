@@ -13,10 +13,10 @@ server = Flask(__name__)
 app = Dash(__name__, server=server)
 
 # Load the dataset
-#obj = DataIngestion() #instance
-#df_copy=obj.initiate_data_ingestion() #return Dataset as datafrom  , using MongoDB database
-file_path = os.path.join(os.getcwd() , "dataset\google_data_merged.csv") #file path
-df_copy= pd.read_csv(file_path)
+obj = DataIngestion() #instance
+df_copy=obj.initiate_data_ingestion() #return Dataset as datafrom  , using MongoDB database
+#file_path = os.path.join(os.getcwd() , "dataset\google_data_merged.csv") #file path
+#df_copy= pd.read_csv(file_path)
 # Clean the data
 df_copy['Price($)'] = df_copy['Price($)'].replace({'\$': '', '₹': ''}, regex=True).astype(float)
 df_copy = df_copy.loc[:, ~df_copy.columns.str.contains('^Unnamed')]
