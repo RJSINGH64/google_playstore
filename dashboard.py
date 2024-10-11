@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 from dash import dash_table
 import os
+from data_ingestion import DataIngestion
 
 # Flask server instance
 server = Flask(__name__)
@@ -12,13 +13,14 @@ server = Flask(__name__)
 app = Dash(__name__, server=server)
 
 # Load the dataset
-file_path = os.path.join(os.getcwd(), "dataset/google_data_merged.csv")
-df_copy = pd.read_csv(file_path)
-
+#obj = DataIngestion() #instance
+#df_copy=obj.initiate_data_ingestion() #return Dataset as datafrom  , using MongoDB database
+file_path = os.path.join(os.getcwd() , "dataset\google_data_merged.csv") #file path
+df_copy= pd.read_csv(file_path)
 # Clean the data
 df_copy['Price($)'] = df_copy['Price($)'].replace({'\$': '', '₹': ''}, regex=True).astype(float)
 df_copy = df_copy.loc[:, ~df_copy.columns.str.contains('^Unnamed')]
-
+df_copy['Installs'] = pd.to_numeric(df_copy['Installs'], errors='coerce') / 1e6  # Convert to millions
 # App layout with Google-style theme (whitish green)
 app.layout = html.Div(style={'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'backgroundColor': '#F0F4F3'}, children=[
     html.Div(
@@ -131,17 +133,18 @@ def show_top_apps(n_clicks):
     if n_clicks is None:
         return html.Div()
 
-    # Group by 'App' and 'Installs', sum the installs, then sort by 'Installs'
-    top_apps = df_copy.groupby('App')['Installs'].sum().reset_index().sort_values(by='Installs', ascending=False).head(10)
+    top_10_apps = df_copy[['App', 'Installs']].drop_duplicates().sort_values(by='Installs', ascending=False).head(10)
+    top_10_apps["Installs"]= top_10_apps["Installs"].astype(int)
+    top_10_apps.rename(columns={"Installs":"Installs(M)"} , inplace=True)
 
     # Display top apps in a DataTable
     top_apps_table = dash_table.DataTable(
         id='top-apps-table',
         columns=[
             {"name": "App", "id": "App"},
-            {"name": "Installs", "id": "Installs"}
+            {"name": "Installs(M)", "id": "Installs(M)"}
         ],
-        data=top_apps.to_dict('records'),  # Convert DataFrame to dict records
+        data=top_10_apps.to_dict('records'),  # Convert DataFrame to dict records
         style_header={
             'backgroundColor': '#34A853',
             'fontWeight': 'bold',
@@ -161,7 +164,7 @@ def show_top_apps(n_clicks):
     )
 
     return html.Div(children=[
-        html.H3("Top 10 Apps by Installs", style={'textAlign': 'center'}),
+        html.H3("Top 10 Apps by Installs in Millions", style={'textAlign': 'center'}),
         top_apps_table
     ])
 
