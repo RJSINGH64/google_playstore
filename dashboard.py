@@ -4,7 +4,6 @@ import pandas as pd
 import plotly.express as px
 from dash import dash_table
 import os
-from data_ingestion import DataIngestion
 import warnings 
 warnings.filterwarnings("ignore")
 
@@ -14,13 +13,10 @@ server = Flask(__name__)
 # Initialize Dash app with Flask server
 app = Dash(__name__, server=server)
 
-# Load the dataset
-obj = DataIngestion() #instance
-df_copy=obj.initiate_data_ingestion() #return Dataset as datafrom  , using MongoDB database
-#file_path = os.path.join(os.getcwd() , "dataset\google_data_merged.csv") #file path
-#df_copy= pd.read_csv(file_path)
+file_path = os.path.join(os.getcwd() , "dataset/google_data_merged.csv")
+df_copy=pd.read_csv(file_path)
+
 # Clean the data
-df_copy['Price($)'] = df_copy['Price($)'].replace({'\$': '', '₹': ''}, regex=True).astype(float)
 df_copy = df_copy.loc[:, ~df_copy.columns.str.contains('^Unnamed')]
 df_copy['Installs'] = pd.to_numeric(df_copy['Installs'], errors='coerce') / 1e6  # Convert to millions
 # App layout with Google-style theme (whitish green)
@@ -209,4 +205,4 @@ def display_relation(selected_option):
 
 # Run Flask/Dash server with debug mode disabled for production
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=8501)
+    app.run_server(debug=False)
