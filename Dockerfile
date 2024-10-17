@@ -13,11 +13,8 @@ RUN python -m pip install --upgrade pip
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the .env file into the container
-COPY .env .env
-
 # Make port 80 available to the world outside this container
-EXPOSE 80
+EXPOSE 8501
 
 # Run the app with Gunicorn when the container launches
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:80", "dashboard:server"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8501", "dashboard:server"]

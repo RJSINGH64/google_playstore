@@ -5,6 +5,8 @@ import plotly.express as px
 from dash import dash_table
 import os
 from data_ingestion import DataIngestion
+import warnings 
+warnings.filterwarnings("ignore")
 
 # Flask server instance
 server = Flask(__name__)
@@ -207,4 +209,4 @@ def display_relation(selected_option):
 
 # Run Flask/Dash server with debug mode disabled for production
 if __name__ == '__main__':
-    app.run_server(debug=False, port=8050)
+    app.run_server(host='0.0.0.0', port=8501)
