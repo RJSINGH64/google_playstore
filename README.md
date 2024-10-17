@@ -1,6 +1,7 @@
  # Google Play Store Dashboard
 
- ## Create python environemnt 3.12 for this project
+ ## Create python environment :
+- **3.12 for this project**
 
 ![Dashboard Screenshot](assets/share_google_play_logo.png) <!-- Google Playstore Image -->
 
