@@ -1,0 +1,85 @@
+/* Body styling */
+body {
+    background-color: #E6F4EA;
+    /* Whitish-green background */
+    font-family: 'Roboto', sans-serif;
+    /* Google font */
+    text-align: left;
+    /* Left-align text */
+    margin: 0;
+    /* Remove default margin */
+    padding: 20px;
+    /* Add padding around the body */
+}
+
+/* Heading styles */
+h1,
+h3 {
+    color: #34A853;
+    /* Google Play green */
+}
+
+/* Button styling */
+button {
+    background-color: #4285F4;
+    /* Google blue */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 10px;
+    /* Added margin for spacing */
+}
+
+button:hover {
+    background-color: #357AE8;
+    /* Darker blue on hover */
+}
+
+/* Image styling */
+img {
+    width: 400px;
+    /* Set width for images */
+    height: auto;
+    /* Maintain aspect ratio */
+    border-radius: 15px;
+    /* Rounded corners */
+}
+
+/* Container styles */
+#app {
+    margin: 0 auto;
+    /* Center container */
+    padding: 20px;
+    /* Add padding */
+    display: flex;
+    /* Use flexbox for layout */
+}
+
+/* Left column */
+.left-column {
+    flex: 1;
+    /* Take up space on the left */
+    padding-right: 20px;
+    /* Space between columns */
+}
+
+/* Right column */
+.right-column {
+    flex: 2;
+    /* Take up more space on the right */
+}
+
+/* Checklist styling */
+#column-checklist {
+    margin-top: 20px;
+    /* Adding space above this section */
+}
+
+/* Data output styling */
+#data-output {
+    margin-top: 20px;
+    /* Adding space above this section */
+}
