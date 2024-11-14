@@ -1,20 +1,25 @@
-# Use an official Python runtime as the base image
+# Use an official Python runtime as a base image
 FROM python:3.9-slim
 
-# Set the working directory in the container
+# Set environment variables to prevent Python from writing .pyc files and buffering output
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE 1
+
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the requirements.txt (you will create this file in the next step)
+# Copy the requirements.txt into the container at /app
 COPY requirements.txt /app/
 
-# Install any dependencies
+# Install dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
+# Copy the rest of the application into the container
 COPY . /app
 
-# Expose the port your app will run on
+# Expose the port the app will run on
 EXPOSE 8501
 
-# Use Gunicorn to serve the app in production
-CMD ["gunicorn", "-b", "0.0.0.0:8501", "dashboard:server"]
+# Command to run the application using Gunicorn
+# Replace 'dashboard:app' with your Flask app's module and app name if different
+CMD ["gunicorn", "--bind", "0.0.0.0:8501", "dashboard:server"]
