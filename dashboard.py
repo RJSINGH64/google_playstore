@@ -4,7 +4,6 @@ import pandas as pd
 import plotly.express as px
 from dash import dash_table
 import os
-from data_ingestion import DataIngestion
 
 # Flask server instance
 server = Flask(__name__)

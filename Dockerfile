@@ -1,5 +1,5 @@
 # Use an official Python runtime as a base image
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Set environment variables to prevent Python from writing .pyc files and buffering output
 ENV PYTHONUNBUFFERED 1
