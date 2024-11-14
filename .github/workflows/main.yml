@@ -1,5 +1,4 @@
-
-name: Google Playstore
+name: Google-Play-App Deploy
 
 on:
   push:
@@ -12,18 +11,20 @@ permissions:
 
 jobs:
   build-and-push-ecr-image:
-    name: Continuous Delivery
+    name: Build and Push to ECR
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-      
-      - name: Install Utilities
+
+      - name: Install Docker
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq unzip
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
 
-      - name: Configure AWS credentials
+      - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -33,9 +34,9 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-    
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
+
+      - name: Build and Push Docker Image to ECR
+        id: build-push
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
@@ -43,55 +44,28 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-  Continuous-Deployment:
+  deploy-to-ec2:
     needs: build-and-push-ecr-image
     runs-on: self-hosted
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v3
-  
-      - name: Configure AWS credentials
+
+      - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-  
-      - name: Install Utilities
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq unzip
-  
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-    
-      - name: Ensure Docker is running
-        run: |
-          # Check if Docker is running and start it if necessary
-          if ! sudo systemctl is-active --quiet docker; then
-            echo "Docker is not running, starting Docker..."
-            sudo systemctl start docker
-          fi
-          sudo systemctl status docker  # Confirm Docker is running
 
-      - name: Pull docker image
+      - name: Pull Docker Image from ECR
         run: |
-          docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest || {
-            echo "Docker pull failed, attempting to restart Docker...";
-            sudo systemctl restart docker;
-            docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest;
-          }
-  
-      - name: Run Docker Image to serve users
+          docker pull ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
+
+      - name: Run Docker Container on EC2
         run: |
-          export IMAGE_NAME="${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest"
-          export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
-          export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          export AWS_DEFAULT_REGION="${{ secrets.AWS_REGION }}"
-          docker compose up -d
+          docker run -d -p 8501:8501 ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.ECR_REPOSITORY_NAME }}:latest
 
       - name: Docker System Prune to Remove Old Images
         run: |
