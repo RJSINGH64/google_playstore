@@ -17,4 +17,4 @@ COPY . /app
 EXPOSE 8501
 
 # Use Gunicorn to serve the app in production
-CMD ["gunicorn", "-b", "0.0.0.0:8050", "dashbord:server"]
+CMD ["gunicorn", "-b", "0.0.0.0:8501", "dashbord:server"]
